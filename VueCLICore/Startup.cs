@@ -1,13 +1,13 @@
+using System.IO;
+using System.Runtime.CompilerServices;
 using DAL.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SpaServices.ReactDevelopmentServer;
+using Microsoft.AspNetCore.SpaServices.Webpack;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using VueCliMiddleware;
 
 namespace VueCLICore
 {
@@ -47,6 +47,17 @@ namespace VueCLICore
                 app.UseHsts();
             }
 
+            if (env.IsDevelopment())
+            {
+                // Use aspnet-webpack webpack-hot-middleware
+                app.UseWebpackDevMiddleware(new WebpackDevMiddlewareOptions
+                {
+                    ProjectPath = Path.Combine(GetProjectFolder(), @"ClientApp"),
+                    ConfigFile = Path.Combine(GetProjectFolder(), @"ClientApp\node_modules\@vue\cli-service\webpack.config.js"),
+                    HotModuleReplacement = true
+                });
+            }
+
             app.UseStaticFiles();
             app.UseSpaStaticFiles();
 
@@ -60,12 +71,15 @@ namespace VueCLICore
             app.UseSpa(spa =>
             {
                 spa.Options.SourcePath = "ClientApp";
-
-                if (env.IsDevelopment())
-                {
-                    spa.UseVueCli(npmScript: "serve", port: 8080);
-                }
             });
+        }
+
+        /// <summary>
+        /// Gets project folder on disk
+        /// </summary>
+        private static string GetProjectFolder([CallerFilePath] string callerFilePath = null)
+        {
+            return Path.GetDirectoryName(callerFilePath);
         }
     }
 }
